@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>宿題ダッシュ！朝のSHRまであと1分</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; user-select:none; -webkit-user-select:none; }
+  html,body { width:100%; height:100%; overflow:hidden; background:#1a1420; font-family:-apple-system,"Hiragino Sans","Yu Gothic",sans-serif; touch-action:none; overscroll-behavior:none; }
+  #wrap { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:#0e0b12; }
+  #stage { position:relative; width:100%; height:100%; max-width:520px; margin:0 auto; overflow:hidden; background:#2a2233; }
+  canvas { position:absolute; inset:0; width:100%; height:100%; display:block; }
+
+  /* HUD */
+  #hud { position:absolute; top:0; left:0; right:0; padding:8px 10px; z-index:10;
+    background:linear-gradient(#000a,#0000); color:#fff; pointer-events:none; }
+  .row { display:flex; align-items:center; gap:8px; }
+  #timeBox { font-weight:800; font-size:15px; }
+  #timeVal { font-size:26px; font-weight:900; font-variant-numeric:tabular-nums; letter-spacing:1px; }
+  #timeVal.warn { color:#ff4d4d; animation:blink .5s steps(1) infinite; }
+  @keyframes blink { 50% { opacity:.25; } }
+  #gaugeWrap { flex:1; height:16px; background:#00000066; border:2px solid #ffffff55; border-radius:10px; overflow:hidden; position:relative; }
+  #gauge { height:100%; width:0%; background:linear-gradient(90deg,#38d66b,#9be15d); transition:width .12s linear; }
+  #gauge.boost { background:linear-gradient(90deg,#ffd24d,#ff9e3d); }
+  #gaugeTxt { position:absolute; inset:0; text-align:center; font-size:11px; font-weight:800; line-height:16px; text-shadow:0 1px 2px #000; }
+  #hwLabel { font-size:11px; font-weight:800; opacity:.9; }
+  #teacherInfo { margin-top:6px; font-size:12px; font-weight:700; display:flex; align-items:center; gap:6px; }
+  #tBar { flex:1; height:6px; background:#00000066; border-radius:4px; overflow:hidden; }
+  #tBarFill { height:100%; width:0%; background:linear-gradient(90deg,#ff7a7a,#c0392b); }
+  #onigiriUi { font-size:12px; font-weight:800; }
+
+  /* Action button */
+  #actBtn { position:absolute; right:24px; bottom:60px; width:96px; height:96px; border-radius:50%;
+    background:radial-gradient(circle at 35% 30%,#ffe07a,#ff9d2e); border:4px solid #fff;
+    color:#5a3b00; font-weight:900; font-size:17px; display:none; align-items:center; justify-content:center;
+    z-index:20; box-shadow:0 6px 18px #000a; text-align:center; line-height:1.1; }
+  #actBtn:active { transform:scale(.92); }
+  #actBtn .ico { font-size:26px; }
+
+  /* Overlays */
+  .overlay { position:absolute; inset:0; z-index:30; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    text-align:center; color:#fff; padding:24px; background:radial-gradient(circle at 50% 30%,#3a2f4a,#150f1e); }
+  .hidden { display:none !important; }
+  .overlay h1 { font-size:28px; font-weight:900; line-height:1.25; margin-bottom:6px; text-shadow:0 3px 0 #00000055; }
+  .overlay .sub { font-size:14px; opacity:.85; margin-bottom:18px; }
+  .rules { background:#ffffff12; border:1px solid #ffffff22; border-radius:14px; padding:14px 16px; font-size:12.5px; line-height:1.7; text-align:left; max-width:340px; margin-bottom:22px; }
+  .rules b { color:#ffd24d; }
+  .btn { background:linear-gradient(#ffd24d,#ff9d2e); color:#5a2d00; font-weight:900; font-size:20px;
+    padding:14px 46px; border:none; border-radius:40px; box-shadow:0 6px 0 #b8621a, 0 10px 20px #0008; }
+  .btn:active { transform:translateY(4px); box-shadow:0 2px 0 #b8621a, 0 6px 12px #0008; }
+  #resultEmoji { font-size:64px; margin-bottom:8px; }
+
+  /* Popup */
+  #popup { position:absolute; top:34%; left:0; right:0; z-index:25; display:flex; flex-direction:column; align-items:center; gap:8px; pointer-events:none; }
+  .pop { background:#000000cc; color:#fff; font-weight:900; font-size:16px; padding:10px 18px; border-radius:30px;
+    border:2px solid #ffd24d; animation:popIn .3s ease, popOut .4s ease 1.3s forwards; box-shadow:0 6px 20px #000a; }
+  .pop.good { border-color:#5bd97a; }
+  .pop.bad { border-color:#ff5d5d; }
+  @keyframes popIn { from{ transform:scale(.4) translateY(20px); opacity:0; } to{ transform:scale(1); opacity:1; } }
+  @keyframes popOut { to{ transform:scale(.9) translateY(-14px); opacity:0; } }
+  #flash { position:absolute; inset:0; z-index:24; pointer-events:none; background:#fff; opacity:0; }
+</style>
+</head>
+<body>
+<div id="wrap"><div id="stage">
+  <canvas id="cv"></canvas>
+
+  <div id="hud" class="hidden">
+    <div class="row">
+      <div id="timeBox">⏰<span id="timeVal">60</span></div>
+      <div class="row" style="flex:1; flex-direction:column; align-items:stretch; gap:2px;">
+        <div id="hwLabel">📝 宿題</div>
+        <div id="gaugeWrap"><div id="gauge"></div><div id="gaugeTxt">0%</div></div>
+      </div>
+    </div>
+    <div id="teacherInfo">👩‍🏫 <span id="tTxt">先生：廊下の奥</span>
+      <div id="tBar"><div id="tBarFill"></div></div>
+      <span id="onigiriUi">🍙×1</span>
+    </div>
+  </div>
+
+  <button id="actBtn"><div><div class="ico">💬</div><div id="actLbl">話す</div></div></button>
+
+  <div id="popup"></div>
+  <div id="flash"></div>
+
+  <!-- Title -->
+  <div id="title" class="overlay">
+    <div style="font-size:52px;">😰📝</div>
+    <h1>宿題ダッシュ！<br><span style="font-size:18px;">〜朝のSHRまであと1分〜</span></h1>
+    <div class="sub">担任の石井先生が来る前に宿題を終わらせろ！</div>
+    <div class="rules">
+      🕐 制限時間は<b>60秒</b>。宿題は<b>自分の机のそば</b>にいる間だけ進む。<br>
+      🧑‍🎓 教室の生徒5人のうち<b>1人だけ</b>が「完璧な宿題」をくれる（<b>速度2倍</b>）。ハズレは<b>無駄話で3秒足止め</b>！<br>
+      🏺 廊下の<b>花瓶を割る</b>と +15秒。🍙 <b>太った生徒におにぎり</b>で +15秒。<br>
+      👩‍🏫 先生の到着＝タイムアップ。延長すると先生も足止めされるで！
+    </div>
+    <button class="btn" id="startBtn">スタート</button>
+  </div>
+
+  <!-- Result -->
+  <div id="result" class="overlay hidden">
+    <div id="resultEmoji">🎉</div>
+    <h1 id="resultTitle">セーフ！</h1>
+    <div class="sub" id="resultSub"></div>
+    <button class="btn" id="retryBtn">もう一度</button>
+  </div>
+
+</div></div>
+
+<script>
+"use strict";
+(function(){
+const TILE = 40;
+const W = 21, H = 17;
+const WALL=0, FLOOR=1, DESK=2;
+const worldW = W*TILE, worldH = H*TILE;
+
+const cv = document.getElementById('cv');
+const ctx = cv.getContext('2d');
+let viewW=0, viewH=0, dpr=1;
+function resize(){
+  dpr = Math.min(window.devicePixelRatio||1, 2);
+  const st = document.getElementById('stage');
+  viewW = st.clientWidth; viewH = st.clientHeight;
+  cv.width = viewW*dpr; cv.height = viewH*dpr;
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+}
+window.addEventListener('resize', resize);
+
+// ---------- World ----------
+let tiles=[];
+const PLAYER_DESK = {x:6,y:10};
+const DESK_COLS=[2,4,6,8,10], DESK_ROWS=[6,8,10,12,14];
+let vases=[], fat=null;
+function buildGrid(){
+  tiles=[];
+  for(let y=0;y<H;y++){ tiles[y]=[]; for(let x=0;x<W;x++) tiles[y][x]=WALL; }
+  for(let y=1;y<=3;y++) for(let x=1;x<=19;x++) tiles[y][x]=FLOOR;   // corridor
+  for(let y=5;y<=15;y++) for(let x=1;x<=11;x++) tiles[y][x]=FLOOR;  // classroom
+  tiles[4][5]=FLOOR; // door
+  for(const cx of DESK_COLS) for(const cy of DESK_ROWS) tiles[cy][cx]=DESK;
+  vases = [ {x:8,y:1,broken:false}, {x:12,y:1,broken:false} ];
+  fat = {x:16,y:3,fed:false};
+}
+
+// Teacher path (tile coords)
+const PATH = [ {x:19,y:2},{x:5,y:2},{x:5,y:9},{x:6,y:9} ];
+let pathPts=[], totalLen=0, segLen=[];
+function buildPath(){
+  pathPts = PATH.map(p=>({x:p.x*TILE+TILE/2, y:p.y*TILE+TILE/2}));
+  totalLen=0; segLen=[];
+  for(let i=0;i<pathPts.length-1;i++){
+    const d=Math.hypot(pathPts[i+1].x-pathPts[i].x, pathPts[i+1].y-pathPts[i].y);
+    segLen.push(d); totalLen+=d;
+  }
+}
+function pointAt(dist){
+  let d=Math.max(0,Math.min(dist,totalLen));
+  for(let i=0;i<segLen.length;i++){
+    if(d<=segLen[i]){ const t=segLen[i]?d/segLen[i]:0;
+      return { x:pathPts[i].x+(pathPts[i+1].x-pathPts[i].x)*t, y:pathPts[i].y+(pathPts[i+1].y-pathPts[i].y)*t }; }
+    d-=segLen[i];
+  }
+  return pathPts[pathPts.length-1];
+}
+
+// ---------- Game state ----------
+let state='title'; // title|playing|win|lose
+let timeLeft=60, hw=0, hwMult=1;
+let hasOnigiri=true;
+let teacherDist=0, teacherFreeze=0, teacherEmote='', teacherEmoteT=0;
+let npcs=[];
+let player={x:0,y:0};
+let playerFreeze=0;
+let curTarget=null;
+let chimePlayed10=false, chimePlayed3=false;
+
+function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+
+function initGame(){
+  buildGrid(); buildPath();
+  timeLeft=60; hw=0; hwMult=1; hasOnigiri=true;
+  teacherDist=0; teacherFreeze=0; teacherEmote=''; teacherEmoteT=0;
+  playerFreeze=0; curTarget=null; chimePlayed10=false; chimePlayed3=false;
+  player.x = 7*TILE+TILE/2; player.y = 10*TILE+TILE/2;
+  // place 5 NPCs on random desks (not player's)
+  let cells=[];
+  for(const cx of DESK_COLS) for(const cy of DESK_ROWS){
+    if(cx===PLAYER_DESK.x && cy===PLAYER_DESK.y) continue;
+    cells.push({x:cx,y:cy});
+  }
+  shuffle(cells);
+  const pick=cells.slice(0,5);
+  const smart=Math.floor(Math.random()*5);
+  npcs = pick.map((c,i)=>({tile:c, talked:false, smart:i===smart}));
+  state='playing';
+  document.getElementById('hud').classList.remove('hidden');
+  document.getElementById('title').classList.add('hidden');
+  document.getElementById('result').classList.add('hidden');
+}
+
+// ---------- Collision ----------
+function tileAt(px,py){ const tx=Math.floor(px/TILE), ty=Math.floor(py/TILE);
+  if(tx<0||ty<0||tx>=W||ty>=H) return WALL; return tiles[ty][tx]; }
+function isBlocked(px,py){
+  const tx=Math.floor(px/TILE), ty=Math.floor(py/TILE);
+  if(tx<0||ty<0||tx>=W||ty>=H) return true;
+  const t=tiles[ty][tx];
+  if(t===WALL||t===DESK) return true;
+  for(const v of vases) if(!v.broken && v.x===tx && v.y===ty) return true;
+  if(fat && !fat.fed && fat.x===tx && fat.y===ty) return true;
+  return false;
+}
+const PR=11; // player radius
+function tryMove(nx,ny){
+  // move X
+  if(!isBlocked(nx+PR,player.y)&&!isBlocked(nx-PR,player.y)&&!isBlocked(nx,player.y+PR)&&!isBlocked(nx,player.y-PR)) player.x=nx;
+  if(!isBlocked(player.x+PR,ny)&&!isBlocked(player.x-PR,ny)&&!isBlocked(player.x,ny+PR)&&!isBlocked(player.x,ny-PR)) player.y=ny;
+}
+
+// ---------- Interaction target ----------
+function pTile(){ return {x:Math.floor(player.x/TILE), y:Math.floor(player.y/TILE)}; }
+function cheb(a,b){ return Math.max(Math.abs(a.x-b.x),Math.abs(a.y-b.y)); }
+function findTarget(){
+  const p=pTile();
+  // vases
+  for(const v of vases) if(!v.broken && cheb(p,v)<=1) return {type:'vase',ref:v};
+  // fat
+  if(fat && !fat.fed && cheb(p,fat)<=1 && hasOnigiri) return {type:'fat',ref:fat};
+  // npc
+  for(const n of npcs) if(!n.talked && cheb(p,n.tile)<=1) return {type:'npc',ref:n};
+  return null;
+}
+
+function doAction(){
+  if(state!=='playing' || playerFreeze>0 || !curTarget) return;
+  const t=curTarget;
+  if(t.type==='vase'){
+    t.ref.broken=true; timeLeft+=15; teacherFreeze+=15; teacherEmote='🧹'; teacherEmoteT=15;
+    showPop('🏺 花瓶が割れた！ +15秒','good'); flash(); sfxBreak();
+  } else if(t.type==='fat'){
+    t.ref.fed=true; hasOnigiri=false; timeLeft+=15; teacherFreeze+=15; teacherEmote='😡'; teacherEmoteT=15;
+    showPop('🍙 おにぎりを渡した！ +15秒','good'); flash(); sfxMunch();
+  } else if(t.type==='npc'){
+    t.ref.talked=true;
+    if(t.ref.smart){ hwMult=2; showPop('✨ 完璧な宿題ゲット！速度2倍！','good'); flash(); sfxPower();
+      document.getElementById('gauge').classList.add('boost');
+    } else { playerFreeze=3; showPop('💬 無駄話…3秒ロス！','bad'); sfxTalk(); }
+  }
+  curTarget=null;
+}
+
+// ---------- Input ----------
+let moveDir={x:0,y:0};
+let moveId=null, joyBase=null, joyKnob=null, joyActive=false;
+const MAXR=52;
+function canvasPos(t){ const r=cv.getBoundingClientRect(); return {x:t.clientX-r.left, y:t.clientY-r.top}; }
+cv.addEventListener('touchstart',e=>{ e.preventDefault();
+  for(const t of e.changedTouches){ const p=canvasPos(t);
+    if(p.x<viewW*0.6 && moveId===null){ moveId=t.identifier; joyBase={x:p.x,y:p.y}; joyKnob={x:p.x,y:p.y}; joyActive=true; }
+  }
+},{passive:false});
+cv.addEventListener('touchmove',e=>{ e.preventDefault();
+  for(const t of e.changedTouches){ if(t.identifier===moveId){ const p=canvasPos(t); joyKnob={x:p.x,y:p.y}; updateJoy(); } }
+},{passive:false});
+function endTouch(e){ for(const t of e.changedTouches){ if(t.identifier===moveId){ moveId=null; joyActive=false; moveDir={x:0,y:0}; } } }
+cv.addEventListener('touchend',endTouch); cv.addEventListener('touchcancel',endTouch);
+function updateJoy(){ let dx=joyKnob.x-joyBase.x, dy=joyKnob.y-joyBase.y; const len=Math.hypot(dx,dy);
+  if(len>MAXR){ dx=dx/len*MAXR; dy=dy/len*MAXR; joyKnob={x:joyBase.x+dx, y:joyBase.y+dy}; }
+  moveDir={ x:dx/MAXR, y:dy/MAXR };
+}
+// keyboard (desktop test)
+const keys={};
+window.addEventListener('keydown',e=>{ keys[e.key.toLowerCase()]=true; if(e.key===' ') doAction(); });
+window.addEventListener('keyup',e=>{ keys[e.key.toLowerCase()]=false; });
+function keyDir(){ let x=0,y=0;
+  if(keys['arrowleft']||keys['a'])x-=1; if(keys['arrowright']||keys['d'])x+=1;
+  if(keys['arrowup']||keys['w'])y-=1; if(keys['arrowdown']||keys['s'])y+=1;
+  if(x||y){ const l=Math.hypot(x,y); return {x:x/l,y:y/l}; } return null;
+}
+// buttons
+document.getElementById('startBtn').addEventListener('click',()=>{ audioInit(); initGame(); });
+document.getElementById('retryBtn').addEventListener('click',()=>{ document.getElementById('gauge').classList.remove('boost'); initGame(); });
+const actBtn=document.getElementById('actBtn');
+actBtn.addEventListener('touchstart',e=>{ e.preventDefault(); doAction(); },{passive:false});
+actBtn.addEventListener('click',e=>{ doAction(); });
+
+// ---------- Audio ----------
+let AC=null;
+function audioInit(){ if(!AC){ try{ AC=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } if(AC&&AC.state==='suspended') AC.resume(); }
+function tone(freq,dur,type='sine',vol=0.15){ if(!AC)return; const o=AC.createOscillator(),g=AC.createGain();
+  o.type=type; o.frequency.value=freq; g.gain.value=vol; o.connect(g); g.connect(AC.destination);
+  const t=AC.currentTime; g.gain.setValueAtTime(vol,t); g.gain.exponentialRampToValueAtTime(0.001,t+dur);
+  o.start(t); o.stop(t+dur); }
+function noise(dur,vol=0.25){ if(!AC)return; const n=AC.sampleRate*dur; const buf=AC.createBuffer(1,n,AC.sampleRate);
+  const d=buf.getChannelData(0); for(let i=0;i<n;i++) d[i]=(Math.random()*2-1)*(1-i/n);
+  const s=AC.createBufferSource(); s.buffer=buf; const g=AC.createGain(); g.gain.value=vol; s.connect(g); g.connect(AC.destination); s.start(); }
+function sfxStep(){ tone(120,0.06,'square',0.05); }
+function sfxBreak(){ noise(0.35,0.3); tone(900,0.15,'triangle',0.12); }
+function sfxMunch(){ tone(180,0.08,'sawtooth',0.12); setTimeout(()=>tone(150,0.08,'sawtooth',0.12),120); setTimeout(()=>tone(170,0.08,'sawtooth',0.12),240); }
+function sfxPower(){ tone(523,0.1,'square',0.14); setTimeout(()=>tone(659,0.1,'square',0.14),100); setTimeout(()=>tone(784,0.18,'square',0.14),200); }
+function sfxTalk(){ tone(300,0.1,'sine',0.1); setTimeout(()=>tone(260,0.1,'sine',0.1),120); setTimeout(()=>tone(300,0.1,'sine',0.1),240); }
+function sfxChime(){ [523,659,784,1046].forEach((f,i)=>setTimeout(()=>tone(f,0.4,'sine',0.16),i*180)); }
+function sfxWin(){ [523,659,784,1046,1318].forEach((f,i)=>setTimeout(()=>tone(f,0.3,'triangle',0.16),i*130)); }
+function sfxLose(){ [400,330,260,180].forEach((f,i)=>setTimeout(()=>tone(f,0.35,'sawtooth',0.16),i*180)); }
+
+// ---------- Effects ----------
+function showPop(text,cls){ const p=document.getElementById('popup'); const d=document.createElement('div');
+  d.className='pop '+(cls||''); d.textContent=text; p.appendChild(d); setTimeout(()=>d.remove(),1750); }
+function flash(){ const f=document.getElementById('flash'); f.style.transition='none'; f.style.opacity='0.6';
+  requestAnimationFrame(()=>{ f.style.transition='opacity .4s'; f.style.opacity='0'; }); }
+
+// ---------- Update ----------
+let stepTimer=0;
+function update(dt){
+  if(state!=='playing') return;
+  // movement
+  let dir = keyDir() || (joyActive?moveDir:{x:0,y:0});
+  if(playerFreeze>0){ playerFreeze-=dt; dir={x:0,y:0}; }
+  const spd=175;
+  const mag=Math.hypot(dir.x,dir.y);
+  if(mag>0.15){
+    const nx=player.x+dir.x*spd*dt, ny=player.y+dir.y*spd*dt;
+    tryMove(nx,ny);
+    stepTimer-=dt; if(stepTimer<=0){ sfxStep(); stepTimer=0.28; }
+  }
+  // homework near own desk
+  const p=pTile();
+  if(cheb(p,PLAYER_DESK)<=1 && hw<100){
+    hw += (100/120)*hwMult*dt;
+    if(hw>=100){ hw=100; win(); return; }
+  }
+  // timer + teacher
+  timeLeft-=dt;
+  if(teacherFreeze>0){ teacherFreeze-=dt; }
+  else if(timeLeft>0.05){ const rem=totalLen-teacherDist; const v=rem/timeLeft; teacherDist+=v*dt; }
+  if(teacherEmoteT>0) teacherEmoteT-=dt;
+  // chime
+  if(!chimePlayed10 && timeLeft<=10){ chimePlayed10=true; sfxChime(); }
+  if(!chimePlayed3 && timeLeft<=3){ chimePlayed3=true; tone(880,0.6,'square',0.18); }
+  if(timeLeft<=0 || teacherDist>=totalLen-0.5){ timeLeft=Math.max(0,timeLeft); lose(); return; }
+  // target
+  curTarget=findTarget();
+}
+function win(){ state='win'; sfxWin();
+  setTimeout(()=>showResult(true),400); }
+function lose(){ state='lose'; sfxLose(); showResult(false); }
+function showResult(won){
+  document.getElementById('hud').classList.add('hidden');
+  actBtn.style.display='none';
+  const r=document.getElementById('result'); r.classList.remove('hidden');
+  const smartIdx=npcs.findIndex(n=>n.smart)+1;
+  if(won){
+    document.getElementById('resultEmoji').textContent='🎉😆';
+    document.getElementById('resultTitle').textContent='セーフ！宿題提出！';
+    document.getElementById('resultSub').innerHTML='残り時間 <b style="color:#ffd24d">'+timeLeft.toFixed(1)+'秒</b>で間に合った！<br>ナイスダッシュや！';
+  } else {
+    document.getElementById('resultEmoji').textContent='😱👩‍🏫';
+    document.getElementById('resultTitle').textContent='石井先生に見つかった…';
+    document.getElementById('resultSub').innerHTML='「廊下に立ってなさい！」<br>宿題は <b style="color:#ff8080">'+Math.floor(hw)+'%</b> までやった…惜しい！';
+  }
+}
+
+// ---------- Render ----------
+let camX=0, camY=0;
+function draw(){
+  ctx.clearRect(0,0,viewW,viewH);
+  // camera
+  camX = Math.max(0, Math.min(player.x-viewW/2, Math.max(0,worldW-viewW)));
+  camY = Math.max(0, Math.min(player.y-viewH/2, Math.max(0,worldH-viewH)));
+  if(worldW<viewW) camX=(worldW-viewW)/2;
+  if(worldH<viewH) camY=(worldH-viewH)/2;
+  ctx.save(); ctx.translate(-camX,-camY);
+
+  // floor & walls
+  const x0=Math.max(0,Math.floor(camX/TILE)), x1=Math.min(W-1,Math.floor((camX+viewW)/TILE));
+  const y0=Math.max(0,Math.floor(camY/TILE)), y1=Math.min(H-1,Math.floor((camY+viewH)/TILE));
+  for(let y=y0;y<=y1;y++) for(let x=x0;x<=x1;x++){
+    const t=tiles[y][x]; const px=x*TILE, py=y*TILE;
+    if(t===WALL){ ctx.fillStyle='#2b2436'; ctx.fillRect(px,py,TILE,TILE);
+      ctx.fillStyle='#231d2e'; ctx.fillRect(px,py,TILE,4);
+    } else {
+      // corridor vs classroom tint
+      const corridor = (y>=1&&y<=3);
+      ctx.fillStyle = corridor ? '#c9b79a' : '#e7ddc6';
+      ctx.fillRect(px,py,TILE,TILE);
+      ctx.strokeStyle='#00000010'; ctx.lineWidth=1; ctx.strokeRect(px+0.5,py+0.5,TILE-1,TILE-1);
+    }
+  }
+  // door mark
+  ctx.fillStyle='#8a5a2b'; ctx.fillRect(5*TILE+6,4*TILE+TILE-6,TILE-12,6);
+
+  // desks
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  for(const cx of DESK_COLS) for(const cy of DESK_ROWS){
+    drawDesk(cx,cy, cx===PLAYER_DESK.x&&cy===PLAYER_DESK.y);
+  }
+  // NPCs seated
+  for(const n of npcs){
+    const px=n.tile.x*TILE+TILE/2, py=n.tile.y*TILE+TILE/2-6;
+    ctx.font='24px sans-serif';
+    ctx.fillText(n.talked?'😑':'🧑‍🎓', px, py);
+  }
+  // player-desk homework icon
+  if(hw>0 && hw<100){ ctx.font='16px sans-serif';
+    ctx.fillText('📝', PLAYER_DESK.x*TILE+TILE/2, PLAYER_DESK.y*TILE+TILE/2-6); }
+
+  // vases (on 台)
+  for(const v of vases){ const px=v.x*TILE+TILE/2, py=v.y*TILE+TILE/2;
+    ctx.fillStyle='#6d5636'; ctx.fillRect(px-13,py+6,26,10); // 台
+    ctx.font='26px sans-serif';
+    ctx.fillText(v.broken?'💥':'🏺', px, py-4);
+  }
+  // fat student
+  if(fat){ const px=fat.x*TILE+TILE/2, py=fat.y*TILE+TILE/2;
+    ctx.font='30px sans-serif'; ctx.fillText(fat.fed?'😋':'🧑‍🦰', px, py);
+    ctx.font='14px sans-serif'; ctx.fillText(fat.fed?'🍙':'😴', px+14, py-16);
+  }
+
+  // teacher
+  const tp=pointAt(teacherDist);
+  ctx.font='30px sans-serif'; ctx.fillText('👩‍🏫', tp.x, tp.y-4);
+  if(teacherEmoteT>0){ ctx.font='22px sans-serif'; ctx.fillText(teacherEmote, tp.x+16, tp.y-26); }
+
+  // player
+  ctx.font='28px sans-serif';
+  ctx.fillText(playerFreeze>0?'😵':'😰', player.x, player.y-2);
+  if(playerFreeze>0){ ctx.font='16px sans-serif'; ctx.fillText('💬', player.x+16, player.y-22); }
+  if(hasOnigiri){ ctx.font='14px sans-serif'; ctx.fillText('🍙', player.x-16, player.y-18); }
+
+  ctx.restore();
+
+  // joystick
+  if(joyActive && joyBase){
+    ctx.beginPath(); ctx.arc(joyBase.x,joyBase.y,MAXR,0,7); ctx.fillStyle='#ffffff22'; ctx.fill();
+    ctx.strokeStyle='#ffffff55'; ctx.lineWidth=3; ctx.stroke();
+    ctx.beginPath(); ctx.arc(joyKnob.x,joyKnob.y,24,0,7); ctx.fillStyle='#ffffffbb'; ctx.fill();
+  }
+}
+function drawDesk(cx,cy,isPlayer){
+  const px=cx*TILE+6, py=cy*TILE+8, w=TILE-12, h=TILE-14;
+  ctx.fillStyle = isPlayer? '#d99a3a' : '#b98a55';
+  roundRect(px,py+3,w,h,4); ctx.fill();
+  ctx.fillStyle = isPlayer? '#f4c66a' : '#d9b483';
+  roundRect(px,py,w,h,4); ctx.fill();
+  if(isPlayer){ ctx.strokeStyle='#fff2c0'; ctx.lineWidth=2.5; roundRect(px,py,w,h,4); ctx.stroke(); }
+}
+function roundRect(x,y,w,h,r){ ctx.beginPath(); ctx.moveTo(x+r,y);
+  ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+
+// ---------- HUD ----------
+function updateHUD(){
+  if(state!=='playing') return;
+  const tv=document.getElementById('timeVal');
+  tv.textContent=Math.ceil(timeLeft);
+  tv.classList.toggle('warn', timeLeft<=10);
+  document.getElementById('gauge').style.width=hw+'%';
+  document.getElementById('gaugeTxt').textContent=Math.floor(hw)+'%';
+  document.getElementById('onigiriUi').textContent = hasOnigiri?'🍙×1':'🍙×0';
+  const f=teacherDist/totalLen;
+  document.getElementById('tBarFill').style.width=(f*100)+'%';
+  let loc; if(teacherFreeze>0) loc='足止め中…！';
+    else if(f<0.35) loc='廊下の奥'; else if(f<0.7) loc='廊下の真ん中';
+    else if(f<0.9) loc='教室のドア前'; else loc='もうすぐそこ！！';
+  document.getElementById('tTxt').textContent='先生：'+loc+(f>0.6?' 👣':'');
+  // action button
+  if(curTarget && playerFreeze<=0){
+    actBtn.style.display='flex';
+    const lbl=document.getElementById('actLbl'), ico=actBtn.querySelector('.ico');
+    if(curTarget.type==='vase'){ ico.textContent='🏺'; lbl.textContent='割る'; }
+    else if(curTarget.type==='fat'){ ico.textContent='🍙'; lbl.textContent='あげる'; }
+    else { ico.textContent='💬'; lbl.textContent='話す'; }
+  } else actBtn.style.display='none';
+}
+
+// ---------- Loop ----------
+let last=0;
+function loop(ts){
+  requestAnimationFrame(loop); // 例外が出ても次フレームは必ず予約
+  const dt=Math.min(0.05,(ts-last)/1000)||0; last=ts;
+  if(state==='playing'){ update(dt); updateHUD(); }
+  if(state!=='title') draw(); // タイトル中はグリッド未生成なので描画しない
+}
+buildGrid(); buildPath(); // 起動時に一度用意（保険）
+resize();
+requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
