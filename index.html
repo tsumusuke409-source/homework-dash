@@ -19,23 +19,18 @@
   #timeVal { font-size:26px; font-weight:900; font-variant-numeric:tabular-nums; letter-spacing:1px; }
   #timeVal.warn { color:#ff4d4d; animation:blink .5s steps(1) infinite; }
   @keyframes blink { 50% { opacity:.25; } }
-  #gaugeWrap { flex:1; height:16px; background:#00000066; border:2px solid #ffffff55; border-radius:10px; overflow:hidden; position:relative; }
-  #gauge { height:100%; width:0%; background:linear-gradient(90deg,#38d66b,#9be15d); transition:width .12s linear; }
-  #gauge.boost { background:linear-gradient(90deg,#ffd24d,#ff9e3d); }
-  #gaugeTxt { position:absolute; inset:0; text-align:center; font-size:11px; font-weight:800; line-height:16px; text-shadow:0 1px 2px #000; }
-  #hwLabel { font-size:11px; font-weight:800; opacity:.9; }
-  #teacherInfo { margin-top:6px; font-size:12px; font-weight:700; display:flex; align-items:center; gap:6px; }
-  #tBar { flex:1; height:6px; background:#00000066; border-radius:4px; overflow:hidden; }
+  #teacherInfo { margin-top:5px; font-size:12px; font-weight:700; display:flex; align-items:center; gap:6px; }
+  #tBar { flex:1; height:7px; background:#00000066; border-radius:4px; overflow:hidden; }
   #tBarFill { height:100%; width:0%; background:linear-gradient(90deg,#ff7a7a,#c0392b); }
-  #onigiriUi { font-size:12px; font-weight:800; white-space:nowrap; }
+  #itemUi { font-size:12px; font-weight:800; white-space:nowrap; }
 
-  /* Action button */
-  #actBtn { position:absolute; right:22px; bottom:52px; width:104px; height:104px; border-radius:50%;
-    background:radial-gradient(circle at 35% 30%,#ffe07a,#ff9d2e); border:4px solid #fff;
-    color:#5a3b00; font-weight:900; font-size:17px; display:none; align-items:center; justify-content:center;
-    z-index:20; box-shadow:0 6px 18px #000a; text-align:center; line-height:1.15; }
+  /* Action button (対象の近くにフロート) */
+  #actBtn { position:absolute; left:0; top:0; width:60px; height:60px; border-radius:50%;
+    background:radial-gradient(circle at 35% 30%,#ffe07a,#ff9d2e); border:3px solid #fff;
+    color:#5a3b00; font-weight:900; font-size:14px; display:none; align-items:center; justify-content:center;
+    z-index:20; box-shadow:0 4px 12px #000a; text-align:center; line-height:1.1; }
+  #actBtn.attack { background:radial-gradient(circle at 35% 30%,#ff8a8a,#e12a2a); color:#fff; border-color:#fff; }
   #actBtn:active { transform:scale(.9); }
-  #actBtn .ico { font-size:15px; font-weight:900; letter-spacing:1px; }
   #hint { position:absolute; left:0; right:0; bottom:14px; text-align:center; color:#fff9; font-size:11px; font-weight:700; z-index:9; pointer-events:none; text-shadow:0 1px 2px #000; }
 
   /* Overlays */
@@ -61,7 +56,7 @@
   .tapHint { font-size:11.5px; opacity:.7; margin-top:14px; line-height:1.6; }
 
   /* Popup */
-  #popup { position:absolute; top:32%; left:0; right:0; z-index:25; display:flex; flex-direction:column; align-items:center; gap:8px; pointer-events:none; }
+  #popup { position:absolute; top:30%; left:0; right:0; z-index:25; display:flex; flex-direction:column; align-items:center; gap:8px; pointer-events:none; }
   .pop { background:#000000cc; color:#fff; font-weight:900; font-size:16px; padding:10px 18px; border-radius:30px;
     border:2px solid #ffd24d; animation:popIn .3s ease, popOut .4s ease 1.3s forwards; box-shadow:0 6px 20px #000a; }
   .pop.good { border-color:#5bd97a; }
@@ -78,18 +73,14 @@
   <div id="hud" class="hidden">
     <div class="row">
       <div id="timeBox">⏰<span id="timeVal">60</span></div>
-      <div class="row" style="flex:1; flex-direction:column; align-items:stretch; gap:2px;">
-        <div id="hwLabel">📝 宿題</div>
-        <div id="gaugeWrap"><div id="gauge"></div><div id="gaugeTxt">0%</div></div>
+      <div id="teacherInfo" style="flex:1;">👨‍🏫 <span id="tTxt">先生：廊下の奥</span>
+        <div id="tBar"><div id="tBarFill"></div></div>
       </div>
-    </div>
-    <div id="teacherInfo">👨‍🏫 <span id="tTxt">先生：廊下の奥</span>
-      <div id="tBar"><div id="tBarFill"></div></div>
-      <span id="onigiriUi">🍙×1</span>
+      <span id="itemUi">🍙×1</span>
     </div>
   </div>
 
-  <button id="actBtn"><div><div class="ico" id="actLbl">話す</div></div></button>
+  <button id="actBtn"><span id="actLbl">話す</span></button>
   <div id="hint" class="hidden">どこでもドラッグで移動</div>
 
   <div id="popup"></div>
@@ -101,8 +92,8 @@
     <h1>宿題ダッシュ！<br><span style="font-size:18px;">〜朝のSHRまであと1分〜</span></h1>
     <div class="sub">担任の石井先生が来る前に宿題を終わらせろ！</div>
     <div class="rules">
-      🕐 制限時間は<b>60秒</b>。宿題は<b>自分の机のそば</b>にいる間だけ進む。<br>
-      🧑‍🎓 教室の生徒5人のうち<b>1人だけ</b>が「完璧な宿題」をくれる（<b>速度2倍</b>）。ハズレは<b>無駄話で3秒足止め</b>！<br>
+      🕐 制限時間は<b>60秒</b>。宿題は<b>自分の机のそば</b>にいる間だけ進む（机の上の円ゲージで確認）。<br>
+      🧑‍🎓 教室の生徒で<b>ノートを書いてる子</b>に話すと「完璧な宿題」で<b>速度2倍</b>！他の子はムダ話で3秒足止め。<br>
       🏺 廊下の<b>花瓶を割る</b>と +15秒。🍙 <b>太った生徒におにぎり</b>で +15秒。<br>
       🧔 石井先生の到着＝タイムアップ。延長すると先生も足止めされるで！
     </div>
@@ -115,7 +106,7 @@
     <h1>あと1分で<br>石井先生が来る！</h1>
     <div class="sub">宿題やってへん…！急いで終わらせろ！</div>
     <button class="btn red" id="goBtn">ダッシュ開始！</button>
-    <div class="tapHint">🕹 画面のどこでもドラッグで移動<br>🅰 近づくと右下にアクションボタンが出るで</div>
+    <div class="tapHint">🕹 画面のどこでもドラッグで移動<br>🅰 近づくと対象のそばにボタンが出るで</div>
   </div>
 
   <!-- Result -->
@@ -161,9 +152,9 @@ function buildGrid(){
   tiles[4][5]=FLOOR; // door
   for(const cx of DESK_COLS) for(const cy of DESK_ROWS) tiles[cy][cx]=DESK;
   vases = [ {x:8,y:1,broken:false}, {x:12,y:1,broken:false} ];
-  fat = {x:16,y:3,fed:false};
-  // チャンバラ男子（廊下下段・当たり判定なしの賑やかし）
-  kendos = [ {x:8,y:3,dir:1,phase:0.0,ci:0}, {x:10,y:3,dir:-1,phase:Math.PI,ci:1} ];
+  fat = {x:16,y:3,fed:false,bubbleT:0,bubbleText:''};
+  // チャンバラ男子（廊下下段・当たり判定なし。竹刀をくれる）
+  kendos = [ {x:8,y:3,dir:1,phase:0.0,ci:0,gave:false}, {x:10,y:3,dir:-1,phase:Math.PI,ci:1,gave:false} ];
 }
 
 // Teacher path (tile coords)
@@ -188,26 +179,29 @@ function pointAt(dist){
 }
 
 // ---------- Game state ----------
-let state='title'; // title|playing|win|lose
+let state='title';
 let timeLeft=60, hw=0, hwMult=1;
-let hasOnigiri=true;
+let hasOnigiri=true, hasSword=false, swordTaken=false;
 let teacherDist=0, teacherFreeze=0, teacherShout='', teacherShoutT=0, teacherPos={x:0,y:0}, teacherPrevX=0, teacherFacing=-1;
 let npcs=[];
 let player={x:0,y:0,walk:0,facing:0,moving:false};
 let playerFreeze=0;
 let curTarget=null;
 let chimePlayed10=false, chimePlayed3=false;
-let animTime=0;
+let animTime=0, loseReason='';
+let rcamX=0, rcamY=0;
 
 function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
-
 const CHAT = ['ねぇ昨日のドラマ見た？','購買のパン旨いよな〜','放課後どうする？','今日寒くない？','週末ひまー？'];
+const HAIR = ['#2b2118','#3a2a1c','#4a3220','#1c1c22','#5a3a24'];
+
 function initGame(){
   buildGrid(); buildPath();
-  timeLeft=60; hw=0; hwMult=1; hasOnigiri=true;
+  timeLeft=60; hw=0; hwMult=1; hasOnigiri=true; hasSword=false; swordTaken=false;
   teacherDist=0; teacherFreeze=0; teacherShout=''; teacherShoutT=0; teacherPrevX=pathPts[0].x; teacherFacing=-1;
-  playerFreeze=0; curTarget=null; chimePlayed10=false; chimePlayed3=false;
+  playerFreeze=0; curTarget=null; chimePlayed10=false; chimePlayed3=false; loseReason='';
   player.x = 7*TILE+TILE/2; player.y = 10*TILE+TILE/2; player.walk=0; player.facing=0; player.moving=false;
+  camReady=false;
   let cells=[];
   for(const cx of DESK_COLS) for(const cy of DESK_ROWS){
     if(cx===PLAYER_DESK.x && cy===PLAYER_DESK.y) continue;
@@ -218,14 +212,13 @@ function initGame(){
   const smart=Math.floor(Math.random()*5);
   const chats=shuffle(CHAT.slice());
   npcs = pick.map((c,i)=>({tile:c, talked:false, smart:i===smart, seed:Math.random()*6.28,
-    bubbleT:0, bubbleText:'', coat: PALETTE.npc[i%PALETTE.npc.length], chat:chats[i%chats.length]}));
+    bubbleT:0, bubbleText:'', hair:HAIR[i%HAIR.length], chat:chats[i%chats.length]}));
   state='playing';
   document.getElementById('hud').classList.remove('hidden');
   document.getElementById('hint').classList.remove('hidden');
   document.getElementById('title').classList.add('hidden');
   document.getElementById('warning').classList.add('hidden');
   document.getElementById('result').classList.add('hidden');
-  document.getElementById('gauge').classList.remove('boost');
 }
 
 // ---------- Collision ----------
@@ -247,28 +240,41 @@ function tryMove(nx,ny){
 // ---------- Interaction ----------
 function pTile(){ return {x:Math.floor(player.x/TILE), y:Math.floor(player.y/TILE)}; }
 function cheb(a,b){ return Math.max(Math.abs(a.x-b.x),Math.abs(a.y-b.y)); }
+function ctr(t){ return {x:t.x*TILE+TILE/2, y:t.y*TILE+TILE/2}; }
 function findTarget(){
   const p=pTile();
-  for(const v of vases) if(!v.broken && cheb(p,v)<=1) return {type:'vase',ref:v};
-  if(fat && !fat.fed && cheb(p,fat)<=1 && hasOnigiri) return {type:'fat',ref:fat};
-  for(const n of npcs) if(!n.talked && cheb(p,n.tile)<=1) return {type:'npc',ref:n};
+  // 竹刀所持→先生を攻撃（トラップ）
+  if(hasSword && teacherDist<totalLen-0.5){
+    const d=Math.hypot(player.x-teacherPos.x, player.y-teacherPos.y);
+    if(d < TILE*1.5) return {type:'attack', wx:teacherPos.x, wy:teacherPos.y-30};
+  }
+  for(const v of vases) if(!v.broken && cheb(p,v)<=1){ const c=ctr(v); return {type:'vase',ref:v, wx:c.x, wy:c.y-18}; }
+  if(fat && !fat.fed && cheb(p,fat)<=1 && hasOnigiri){ const c=ctr(fat); return {type:'fat',ref:fat, wx:c.x, wy:c.y-6}; }
+  for(const n of npcs) if(!n.talked && cheb(p,n.tile)<=1){ const c=ctr(n.tile); return {type:'npc',ref:n, wx:c.x, wy:c.y-8}; }
+  if(!swordTaken) for(const k of kendos) if(cheb(p,k)<=1){ const c=ctr(k); return {type:'kendo',ref:k, wx:c.x, wy:c.y-6}; }
   return null;
 }
 function doAction(){
   if(state!=='playing' || playerFreeze>0 || !curTarget) return;
   const t=curTarget;
-  if(t.type==='vase'){
+  if(t.type==='attack'){
+    teacherShout='なにをするか──っ！！'; teacherShoutT=2; loseReason='attack';
+    showPop('🗡 石井先生に斬りかかった！','bad'); flash(); sfxLose();
+    state='lose'; showResult(false); curTarget=null; return;
+  } else if(t.type==='vase'){
     t.ref.broken=true; timeLeft+=15; teacherFreeze+=15; teacherShout='うわっ花瓶が…！'; teacherShoutT=3;
     showPop('🏺 花瓶が割れた！ +15秒','good'); flash(); sfxBreak();
   } else if(t.type==='fat'){
     t.ref.fed=true; hasOnigiri=false; timeLeft+=15; teacherFreeze+=15; teacherShout='廊下で食うな！'; teacherShoutT=3;
     fat.bubbleT=2.5; fat.bubbleText='むしゃむしゃ🍙';
     showPop('🍙 おにぎりを渡した！ +15秒','good'); flash(); sfxMunch();
+  } else if(t.type==='kendo'){
+    hasSword=true; swordTaken=true; t.ref.gave=true; t.ref.bubbleT=2; t.ref.bubbleText='貸したるわ！';
+    showPop('🗡 チャンバラをもらった！','good'); flash(); sfxPower();
   } else if(t.type==='npc'){
     const n=t.ref; n.talked=true; n.bubbleT=1.8;
-    if(n.smart){ hwMult=2; n.bubbleText='これ写しな！✏️'; showPop('✨ 完璧な宿題ゲット！速度2倍！','good'); flash(); sfxPower();
-      document.getElementById('gauge').classList.add('boost');
-    } else { playerFreeze=3; n.bubbleT=3; n.bubbleText=n.chat; showPop('💬 無駄話…3秒ロス！','bad'); sfxTalk(); }
+    if(n.smart){ hwMult=2; n.bubbleText='これ写しな！✏️'; showPop('✨ 完璧な宿題ゲット！速度2倍！','good'); flash(); sfxPower(); }
+    else { playerFreeze=3; n.bubbleT=3; n.bubbleText=n.chat; showPop('💬 無駄話…3秒ロス！','bad'); sfxTalk(); }
   }
   curTarget=null;
 }
@@ -292,11 +298,9 @@ function updateJoy(){ let dx=joyKnob.x-joyBase.x, dy=joyKnob.y-joyBase.y; const 
   if(len>MAXR){ dx=dx/len*MAXR; dy=dy/len*MAXR; joyKnob={x:joyBase.x+dx, y:joyBase.y+dy}; }
   moveDir={ x:dx/MAXR, y:dy/MAXR };
 }
-// マウス（PCテスト）
 cv.addEventListener('mousedown',e=>{ const p=canvasPos(e); moveId='mouse'; joyBase={x:p.x,y:p.y}; joyKnob={x:p.x,y:p.y}; joyActive=true; });
 window.addEventListener('mousemove',e=>{ if(moveId==='mouse'){ const p=canvasPos(e); joyKnob={x:p.x,y:p.y}; updateJoy(); } });
 window.addEventListener('mouseup',e=>{ if(moveId==='mouse'){ moveId=null; joyActive=false; moveDir={x:0,y:0}; } });
-// キーボード
 const keys={};
 window.addEventListener('keydown',e=>{ keys[e.key.toLowerCase()]=true; if(e.key===' ') doAction(); });
 window.addEventListener('keyup',e=>{ keys[e.key.toLowerCase()]=false; });
@@ -305,7 +309,6 @@ function keyDir(){ let x=0,y=0;
   if(keys['arrowup']||keys['w'])y-=1; if(keys['arrowdown']||keys['s'])y+=1;
   if(x||y){ const l=Math.hypot(x,y); return {x:x/l,y:y/l}; } return null;
 }
-// ボタン類
 document.getElementById('startBtn').addEventListener('click',()=>{ audioInit();
   document.getElementById('title').classList.add('hidden');
   document.getElementById('warning').classList.remove('hidden'); });
@@ -344,7 +347,7 @@ function flash(){ const f=document.getElementById('flash'); f.style.transition='
 let stepTimer=0;
 function update(dt){
   animTime+=dt;
-  for(const k of kendos) k.phase+=dt*6;
+  for(const k of kendos){ k.phase+=dt*6; if(k.bubbleT>0) k.bubbleT-=dt; }
   if(state!=='playing') return;
   let dir = keyDir() || (joyActive?moveDir:{x:0,y:0});
   if(playerFreeze>0){ playerFreeze-=dt; dir={x:0,y:0}; }
@@ -358,13 +361,11 @@ function update(dt){
     player.walk += dt*12;
     stepTimer-=dt; if(stepTimer<=0){ sfxStep(); stepTimer=0.28; }
   }
-  // homework
   const p=pTile();
   if(cheb(p,PLAYER_DESK)<=1 && hw<100){
     hw += (100/120)*hwMult*dt;
     if(hw>=100){ hw=100; win(); return; }
   }
-  // timer + teacher
   timeLeft-=dt;
   if(teacherFreeze>0){ teacherFreeze-=dt; }
   else if(timeLeft>0.05){ const rem=totalLen-teacherDist; const v=rem/timeLeft; teacherDist+=v*dt; }
@@ -372,17 +373,15 @@ function update(dt){
   if(teacherPos.x < teacherPrevX-0.3) teacherFacing=-1; else if(teacherPos.x>teacherPrevX+0.3) teacherFacing=1;
   teacherPrevX=teacherPos.x;
   if(teacherShoutT>0) teacherShoutT-=dt;
-  // bubbles decay
   for(const n of npcs) if(n.bubbleT>0) n.bubbleT-=dt;
   if(fat && fat.bubbleT>0) fat.bubbleT-=dt;
-  // chime
   if(!chimePlayed10 && timeLeft<=10){ chimePlayed10=true; sfxChime(); }
   if(!chimePlayed3 && timeLeft<=3){ chimePlayed3=true; tone(880,0.6,'square',0.18); }
   if(timeLeft<=0 || teacherDist>=totalLen-0.5){ timeLeft=Math.max(0,timeLeft); lose(); return; }
   curTarget=findTarget();
 }
 function win(){ state='win'; sfxWin(); setTimeout(()=>showResult(true),450); }
-function lose(){ state='lose'; sfxLose(); showResult(false); }
+function lose(){ loseReason='caught'; state='lose'; sfxLose(); showResult(false); }
 function showResult(won){
   document.getElementById('hud').classList.add('hidden');
   document.getElementById('hint').classList.add('hidden');
@@ -392,6 +391,10 @@ function showResult(won){
     document.getElementById('resultEmoji').textContent='🎉';
     document.getElementById('resultTitle').textContent='セーフ！宿題提出！';
     document.getElementById('resultSub').innerHTML='残り時間 <b style="color:#ffd24d">'+timeLeft.toFixed(1)+'秒</b>で間に合った！<br>ナイスダッシュや！';
+  } else if(loseReason==='attack'){
+    document.getElementById('resultEmoji').textContent='⚔️😱';
+    document.getElementById('resultTitle').textContent='先生に手を出した…！';
+    document.getElementById('resultSub').innerHTML='石井先生に竹刀で斬りかかった！<br><b style="color:#ff8080">一発アウト、即・生徒指導室行き…</b>';
   } else {
     document.getElementById('resultEmoji').textContent='😱';
     document.getElementById('resultTitle').textContent='石井先生に見つかった…';
@@ -402,29 +405,27 @@ function showResult(won){
 // ================= RENDER =================
 const PALETTE = {
   player:{coat:'#3fb4e8', hood:'#2e93c8', pants:'#37506b'},
-  npc:['#c8674f','#d18a4a','#b5644e','#c77a5a','#bd6d52'],
+  uniform:'#26305c', uniformHi:'#333f74', collar:'#f2f4fa',
   teacher:{coat:'#6d4a30', hood:'#4a3320', pants:'#33333a', beard:'#8a8a8a', skin:'#e8b78c'},
   fat:{coat:'#e08a3a', hood:'#c4732b', pants:'#4a3b2f'},
   kendo:['#3f6fae','#4a7a4a'],
   skin:'#f0c6a0'
 };
-// snow
-let snow=[];
-for(let i=0;i<26;i++) snow.push({x:Math.random(), y:Math.random(), s:0.6+Math.random()*1.4, sp:0.2+Math.random()*0.5});
 
-let camX=0, camY=0;
+let camX=0, camY=0, camReady=false;
 function draw(){
   ctx.clearRect(0,0,viewW,viewH);
   const tcamX = Math.max(0, Math.min(player.x-viewW/2, Math.max(0,worldW-viewW)));
   let tcamY = Math.max(0, Math.min(player.y-viewH*0.55, Math.max(0,worldH-viewH)));
   if(worldW<viewW) tcamX=(worldW-viewW)/2;
   if(worldH<viewH) tcamY=(worldH-viewH)/2;
+  if(!camReady){ camX=tcamX; camY=tcamY; camReady=true; }
   camX += (tcamX-camX)*0.15; camY += (tcamY-camY)*0.15;
-  ctx.save(); ctx.translate(-Math.round(camX),-Math.round(camY));
+  rcamX=Math.round(camX); rcamY=Math.round(camY);
+  ctx.save(); ctx.translate(-rcamX,-rcamY);
 
   drawFloor();
 
-  // 描画エンティティを集めてY順ソート
   const ents=[];
   for(const cx of DESK_COLS) for(const cy of DESK_ROWS){
     const npc = npcs.find(n=>n.tile.x===cx&&n.tile.y===cy);
@@ -436,7 +437,7 @@ function draw(){
       {coat:PALETTE.fat.coat,hood:PALETTE.fat.hood,pants:PALETTE.fat.pants,big:true,fat:true,idle:true,idlePhase:animTime*2,face:fat.fed?'happy':'normal',facing:-1})});
   ents.push({y:player.y, fn:()=>drawPerson(player.x, player.y,
       {coat:PALETTE.player.coat,hood:PALETTE.player.hood,pants:PALETTE.player.pants,
-       moving:player.moving,walk:player.walk,facing:player.facing,face:'panic',onigiri:hasOnigiri})});
+       moving:player.moving,walk:player.walk,facing:player.facing,face:'panic',onigiri:hasOnigiri,sword:hasSword})});
   ents.push({y:teacherPos.y, fn:()=>drawPerson(teacherPos.x, teacherPos.y,
       {coat:PALETTE.teacher.coat,hood:PALETTE.teacher.hood,pants:PALETTE.teacher.pants,skin:PALETTE.teacher.skin,
        big:true,fat:true,beard:true,beardColor:PALETTE.teacher.beard,glasses:true,
@@ -446,34 +447,43 @@ function draw(){
   ents.sort((a,b)=>a.y-b.y);
   for(const e of ents) e.fn();
 
-  // 吹き出しレイヤー（最前面）
+  drawHwRing(); // 自席の宿題サークルゲージ
+
   for(const n of npcs) if(n.bubbleT>0) drawBubble(n.tile.x*TILE+TILE/2, n.tile.y*TILE+TILE*0.15, n.bubbleText);
+  for(const k of kendos) if(k.bubbleT>0) drawBubble(k.x*TILE+TILE/2, k.y*TILE, k.bubbleText);
   if(fat && fat.bubbleT>0) drawBubble(fat.x*TILE+TILE/2, fat.y*TILE+TILE*0.1, fat.bubbleText);
   if(teacherShoutT>0) drawBubble(teacherPos.x, teacherPos.y-TILE*1.35, teacherShout, '#ffdada');
-  // アクション可能マーカー
-  if(curTarget && playerFreeze<=0 && state==='playing'){
-    const r=curTarget.ref; let mx,my;
-    if(curTarget.type==='npc'){ mx=r.tile.x*TILE+TILE/2; my=r.tile.y*TILE+TILE*0.05; }
-    else { mx=r.x*TILE+TILE/2; my=r.y*TILE-TILE*0.15; }
-    const b=Math.sin(animTime*6)*3;
-    ctx.fillStyle='#ffd24d'; ctx.font='bold 16px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
-    ctx.fillText('▼', mx, my-b);
-  }
 
   ctx.restore();
-  drawSnow();
   drawJoystick();
 }
 
+function drawHwRing(){
+  const cx=PLAYER_DESK.x*TILE+TILE/2, cy=PLAYER_DESK.y*TILE+TILE*0.14;
+  const near = cheb(pTile(),PLAYER_DESK)<=1 && state==='playing';
+  const r=17;
+  // 台座の丸
+  ctx.fillStyle='rgba(20,28,40,0.72)'; ctx.beginPath(); ctx.arc(cx,cy,r+4,0,7); ctx.fill();
+  ctx.lineWidth=5; ctx.lineCap='round';
+  ctx.strokeStyle='rgba(255,255,255,0.18)'; ctx.beginPath(); ctx.arc(cx,cy,r,0,7); ctx.stroke();
+  ctx.strokeStyle = hwMult>1?'#ffcf4d':'#4fd873';
+  ctx.beginPath(); ctx.arc(cx,cy,r, -Math.PI/2, -Math.PI/2 + (hw/100)*Math.PI*2); ctx.stroke();
+  if(near){ ctx.strokeStyle='rgba(255,255,255,'+(0.25+Math.sin(animTime*6)*0.2)+')'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.arc(cx,cy,r+7,0,7); ctx.stroke(); }
+  ctx.fillStyle='#fff'; ctx.font='bold 13px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText(Math.floor(hw)+'%', cx, cy+1);
+  ctx.fillStyle='rgba(255,255,255,0.7)'; ctx.font='bold 8px sans-serif';
+  ctx.fillText('宿題', cx, cy-r-6);
+}
+
 function drawFloor(){
-  const x0=Math.max(0,Math.floor(camX/TILE)), x1=Math.min(W-1,Math.floor((camX+viewW)/TILE));
-  const y0=Math.max(0,Math.floor(camY/TILE)), y1=Math.min(H-1,Math.floor((camY+viewH)/TILE));
+  const x0=Math.max(0,Math.floor(rcamX/TILE)), x1=Math.min(W-1,Math.floor((rcamX+viewW)/TILE));
+  const y0=Math.max(0,Math.floor(rcamY/TILE)), y1=Math.min(H-1,Math.floor((rcamY+viewH)/TILE));
   for(let y=y0;y<=y1;y++) for(let x=x0;x<=x1;x++){
     const t=tiles[y][x]; const px=x*TILE, py=y*TILE;
     if(t===WALL){
       ctx.fillStyle='#2c3a4d'; ctx.fillRect(px,py,TILE,TILE);
       ctx.fillStyle='#24303f'; ctx.fillRect(px,py+TILE-6,TILE,6);
-      // 窓（上壁）＝ホワイトアウトの雪景色
       if(y===0 && x>=2 && x<=18 && x%3===0){
         ctx.fillStyle='#bcd6ea'; ctx.fillRect(px+5,py+8,TILE-10,TILE-16);
         ctx.fillStyle='#e8f2fb'; ctx.fillRect(px+5,py+8,TILE-10,(TILE-16)/2);
@@ -485,12 +495,11 @@ function drawFloor(){
       if(corridor){ ctx.fillStyle=((x+y)&1)?'#d7dee6':'#cfd7e0'; ctx.fillRect(px,py,TILE,TILE); }
       else {
         ctx.fillStyle='#e7d3ac'; ctx.fillRect(px,py,TILE,TILE);
-        ctx.fillStyle='#dcc79a'; ctx.fillRect(px,py+TILE-4,TILE,4); // 板の目地
+        ctx.fillStyle='#dcc79a'; ctx.fillRect(px,py+TILE-4,TILE,4);
       }
       ctx.strokeStyle='#00000010'; ctx.lineWidth=1; ctx.strokeRect(px+0.5,py+0.5,TILE-1,TILE-1);
     }
   }
-  // ドア枠
   ctx.fillStyle='#7a5a2b'; ctx.fillRect(5*TILE+3,4*TILE+TILE-8,TILE-6,8);
   ctx.fillStyle='#63481f'; ctx.fillRect(5*TILE+3,4*TILE+TILE-8,TILE-6,3);
 }
@@ -510,42 +519,40 @@ function drawPerson(px,py,o){
   const bodyW = (o.fat?26:20)*s;
   const footY=py, hipY=py-15*s-bob, shoulderY=py-30*s-bob, headY=py-41*s-bob, headR=(o.big?9:8)*s;
 
-  // 影
   ctx.fillStyle='rgba(0,0,0,0.20)';
   ctx.beginPath(); ctx.ellipse(px, py+2, (o.fat?18:14)*s, (o.fat?7:5)*s,0,0,7); ctx.fill();
 
-  // 脚＋靴
   limb(px-5*s, hipY, px-5*s - swing, footY, 6.5*s, pants);
   limb(px+5*s, hipY, px+5*s + swing, footY, 6.5*s, pants);
   ctx.fillStyle='#2a2a2e';
   ctx.beginPath(); ctx.ellipse(px-5*s-swing, footY, 4.5*s,2.6*s,0,0,7); ctx.fill();
   ctx.beginPath(); ctx.ellipse(px+5*s+swing, footY, 4.5*s,2.6*s,0,0,7); ctx.fill();
 
-  // 奥の腕
   const armSw = moving? Math.sin(wp)*5*s : 1.5*s;
   limb(px-bodyW/2+2*s, shoulderY+4*s, px-bodyW/2-1*s, shoulderY+17*s-armSw, 5*s, shade(coat,-18));
   ctx.fillStyle=skin; ctx.beginPath(); ctx.arc(px-bodyW/2-1*s, shoulderY+17*s-armSw, 3*s,0,7); ctx.fill();
 
-  // 胴（コート）
   ctx.fillStyle=coat;
   roundRect(px-bodyW/2, shoulderY, bodyW, (hipY-shoulderY)+6*s, 6*s); ctx.fill();
   ctx.fillStyle='rgba(255,255,255,0.14)';
   roundRect(px-bodyW/2, shoulderY, bodyW*0.42, (hipY-shoulderY), 6*s); ctx.fill();
-  // ジッパー
   ctx.strokeStyle='rgba(0,0,0,0.18)'; ctx.lineWidth=1.4*s; ctx.beginPath();
   ctx.moveTo(px, shoulderY+2*s); ctx.lineTo(px, hipY+4*s); ctx.stroke();
 
-  // 手前の腕
   limb(px+bodyW/2-2*s, shoulderY+4*s, px+bodyW/2+1*s, shoulderY+17*s+armSw, 5*s, coat);
   ctx.fillStyle=skin; ctx.beginPath(); ctx.arc(px+bodyW/2+1*s, shoulderY+17*s+armSw, 3*s,0,7); ctx.fill();
-  // おにぎり所持（プレイヤー）
-  if(o.onigiri){ ctx.fillStyle='#fff'; ctx.beginPath();
-    ctx.moveTo(px+bodyW/2+1*s, shoulderY+13*s); ctx.lineTo(px+bodyW/2-3*s, shoulderY+20*s); ctx.lineTo(px+bodyW/2+5*s, shoulderY+20*s); ctx.closePath(); ctx.fill();
-    ctx.fillStyle='#333'; ctx.fillRect(px+bodyW/2-1*s, shoulderY+17*s, 4*s,3*s); }
 
-  // 頭
+  if(o.onigiri){ ctx.fillStyle='#fff'; ctx.beginPath();
+    ctx.moveTo(px-bodyW/2-1*s, shoulderY+13*s); ctx.lineTo(px-bodyW/2-5*s, shoulderY+20*s); ctx.lineTo(px-bodyW/2+3*s, shoulderY+20*s); ctx.closePath(); ctx.fill();
+    ctx.fillStyle='#333'; ctx.fillRect(px-bodyW/2-3*s, shoulderY+17*s, 4*s,3*s); }
+  if(o.sword){ // 手前手に竹刀を構える
+    const hx=px+bodyW/2+1*s, hy=shoulderY+17*s+armSw;
+    ctx.strokeStyle='#caa24a'; ctx.lineWidth=4*s; ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(hx,hy); ctx.lineTo(hx+(dir||1)*4*s, hy-26*s); ctx.stroke();
+    ctx.strokeStyle='#8a6a2a'; ctx.lineWidth=2*s; ctx.beginPath(); ctx.moveTo(hx,hy); ctx.lineTo(hx+(dir||1)*2*s,hy-5*s); ctx.stroke();
+  }
+
   ctx.fillStyle=skin; ctx.beginPath(); ctx.arc(px, headY, headR,0,7); ctx.fill();
-  // フード／髪
   ctx.fillStyle=hood;
   ctx.beginPath(); ctx.arc(px, headY-1*s, headR+2*s, Math.PI*1.02, Math.PI*1.98); ctx.fill();
   ctx.fillRect(px-headR-2*s, headY-3*s, (headR+2*s)*2, 3*s);
@@ -575,7 +582,6 @@ function drawPerson(px,py,o){
     ctx.strokeStyle='#33291f'; ctx.lineWidth=1.2*s; ctx.beginPath();
     ctx.moveTo(px-1.5*s+fx, headY+4*s); ctx.lineTo(px+1.5*s+fx, headY+4*s); ctx.stroke();
   }
-  // 髭（先生）
   if(o.beard){
     ctx.fillStyle=o.beardColor||'#8a8a8a';
     ctx.beginPath(); ctx.arc(px+fx, headY+2.5*s, headR*0.95, 0.05*Math.PI, 0.95*Math.PI); ctx.fill();
@@ -588,7 +594,7 @@ function drawPerson(px,py,o){
     ctx.beginPath(); ctx.moveTo(px-0.6*s+fx,headY); ctx.lineTo(px+0.6*s+fx,headY); ctx.stroke();
   }
 }
-function shade(hex,amt){ // 明暗調整
+function shade(hex,amt){
   const n=parseInt(hex.slice(1),16); let r=(n>>16)+amt,g=((n>>8)&255)+amt,b=(n&255)+amt;
   r=Math.max(0,Math.min(255,r)); g=Math.max(0,Math.min(255,g)); b=Math.max(0,Math.min(255,b));
   return 'rgb('+r+','+g+','+b+')';
@@ -596,7 +602,7 @@ function shade(hex,amt){ // 明暗調整
 
 function drawDesk(cx,cy,isPlayer,npc){
   const bx=cx*TILE, by=cy*TILE;
-  if(isPlayer){ // 自席のふんわり光るリング
+  if(isPlayer){
     const pulse=0.5+Math.sin(animTime*3)*0.2;
     ctx.save(); ctx.globalAlpha=pulse;
     const g=ctx.createRadialGradient(bx+TILE/2,by+TILE*0.6,4, bx+TILE/2,by+TILE*0.6,TILE*0.8);
@@ -604,27 +610,29 @@ function drawDesk(cx,cy,isPlayer,npc){
     ctx.fillStyle=g; ctx.beginPath(); ctx.arc(bx+TILE/2,by+TILE*0.6,TILE*0.8,0,7); ctx.fill();
     ctx.restore();
   }
-  // 椅子
   ctx.fillStyle='#9a7a52'; roundRect(bx+TILE*0.30, by+TILE*0.06, TILE*0.40, TILE*0.5, 3); ctx.fill();
   ctx.fillStyle='#8a6a45'; roundRect(bx+TILE*0.30, by+TILE*0.34, TILE*0.40, TILE*0.16, 3); ctx.fill();
-  // 座ってる生徒（上半身）
+
+  // 座ってる生徒（紺の制服）
   if(npc){
     const idle=animTime*2+npc.seed;
-    const px=bx+TILE/2, py=by+TILE*0.66-Math.sin(idle)*1.0;
-    const s=1;
-    // 胴
-    ctx.fillStyle=npc.coat; roundRect(px-10, py-24, 20, 22, 6); ctx.fill();
-    ctx.fillStyle='rgba(255,255,255,0.12)'; roundRect(px-10, py-24, 8, 20, 6); ctx.fill();
+    const lean = npc.smart? Math.sin(animTime*3)*1.2 : 0; // 書くために前傾
+    const px=bx+TILE/2, py=by+TILE*0.66-Math.sin(idle)*1.0+ (npc.smart?lean*0.4:0);
+    // 胴（制服）
+    ctx.fillStyle=PALETTE.uniform; roundRect(px-10, py-24, 20, 22, 6); ctx.fill();
+    ctx.fillStyle='rgba(255,255,255,0.10)'; roundRect(px-10, py-24, 8, 20, 6); ctx.fill();
+    // 白い襟
+    ctx.fillStyle=PALETTE.collar;
+    ctx.beginPath(); ctx.moveTo(px-6,py-24); ctx.lineTo(px,py-18); ctx.lineTo(px+6,py-24); ctx.closePath(); ctx.fill();
+    ctx.fillStyle=shade(PALETTE.uniform,20); ctx.beginPath(); ctx.moveTo(px-1.5,py-22); ctx.lineTo(px+1.5,py-22); ctx.lineTo(px,py-16); ctx.closePath(); ctx.fill();
     // 頭
     ctx.fillStyle=PALETTE.skin; ctx.beginPath(); ctx.arc(px, py-30, 8,0,7); ctx.fill();
-    ctx.fillStyle=shade(npc.coat,-25); ctx.beginPath(); ctx.arc(px, py-31, 10, Math.PI*1.02, Math.PI*1.98); ctx.fill();
+    ctx.fillStyle=npc.hair; ctx.beginPath(); ctx.arc(px, py-31, 10, Math.PI*1.02, Math.PI*1.98); ctx.fill();
     ctx.fillRect(px-10, py-33, 20, 3);
-    // 顔（後ろ向き気味＝勉強中/talk時は正面）
     ctx.fillStyle='#33291f';
-    if(npc.talked){ ctx.beginPath(); ctx.arc(px-3, py-30, 1.4,0,7); ctx.arc(px+3, py-30, 1.4,0,7); ctx.fill(); }
-    else { ctx.beginPath(); ctx.arc(px-3, py-30, 1.2,0,7); ctx.arc(px+3, py-30, 1.2,0,7); ctx.fill(); }
+    ctx.beginPath(); ctx.arc(px-3, py-30, 1.3,0,7); ctx.arc(px+3, py-30, 1.3,0,7); ctx.fill();
   }
-  // 机（座席の手前に重ねる）
+  // 机
   const topY=by+TILE*0.52;
   ctx.fillStyle=isPlayer?'#c98f34':'#b08a58';
   roundRect(bx+TILE*0.10, topY, TILE*0.80, TILE*0.40, 4); ctx.fill();
@@ -632,24 +640,34 @@ function drawDesk(cx,cy,isPlayer,npc){
   roundRect(bx+TILE*0.10, topY-6, TILE*0.80, TILE*0.20, 4); ctx.fill();
   if(isPlayer){
     ctx.strokeStyle='#fff0c0'; ctx.lineWidth=2; roundRect(bx+TILE*0.10, topY-6, TILE*0.80, TILE*0.20,4); ctx.stroke();
-    // ノート＋鉛筆
     ctx.fillStyle='#fff'; roundRect(bx+TILE*0.30, topY-4, TILE*0.34, TILE*0.15, 2); ctx.fill();
     ctx.strokeStyle='#9fb0c0'; ctx.lineWidth=1; ctx.beginPath();
     ctx.moveTo(bx+TILE*0.33, topY+1); ctx.lineTo(bx+TILE*0.60, topY+1); ctx.stroke();
     ctx.strokeStyle='#f5a623'; ctx.lineWidth=2.5; ctx.beginPath();
     ctx.moveTo(bx+TILE*0.55, topY+6); ctx.lineTo(bx+TILE*0.66, topY-2); ctx.stroke();
   } else {
-    ctx.fillStyle='#eee'; roundRect(bx+TILE*0.34, topY-3, TILE*0.28, TILE*0.13, 2); ctx.fill();
+    // ノート
+    ctx.fillStyle='#fff'; roundRect(bx+TILE*0.32, topY-3, TILE*0.30, TILE*0.14, 2); ctx.fill();
+    if(npc && npc.smart){
+      // 優秀な生徒：ペンを走らせる手（書くモーション）
+      const nx=bx+TILE*0.40 + (Math.sin(animTime*11)*0.5+0.5)*TILE*0.16;
+      const ny=topY+2;
+      ctx.strokeStyle='#c9a24a'; ctx.lineWidth=2.4; ctx.lineCap='round';
+      ctx.beginPath(); ctx.moveTo(nx,ny+2); ctx.lineTo(nx+5,ny-6); ctx.stroke(); // ペン
+      ctx.fillStyle=PALETTE.skin; ctx.beginPath(); ctx.arc(nx,ny+3,3,0,7); ctx.fill(); // 手
+      // 書いた線
+      ctx.strokeStyle='#7a8a9a'; ctx.lineWidth=0.8; ctx.beginPath();
+      ctx.moveTo(bx+TILE*0.35, topY+5); ctx.lineTo(nx-2, topY+5); ctx.stroke();
+    }
   }
 }
 
 function drawVase(v){
   const px=v.x*TILE+TILE/2, py=v.y*TILE+TILE*0.62;
-  // 台
   ctx.fillStyle='#6d5636'; roundRect(px-14, py+6, 28, 12, 3); ctx.fill();
   ctx.fillStyle='#5a462b'; roundRect(px-14, py+14, 28, 4, 3); ctx.fill();
   if(v.broken){
-    ctx.fillStyle='#b98a55'; // 破片
+    ctx.fillStyle='#b98a55';
     ctx.beginPath(); ctx.moveTo(px-8,py+6); ctx.lineTo(px-2,py-2); ctx.lineTo(px-12,py+2); ctx.fill();
     ctx.beginPath(); ctx.moveTo(px+8,py+6); ctx.lineTo(px+3,py-1); ctx.lineTo(px+13,py+3); ctx.fill();
     ctx.fillStyle='#a07a48'; ctx.beginPath(); ctx.ellipse(px, py+5, 9,3,0,0,7); ctx.fill();
@@ -665,23 +683,20 @@ function drawVase(v){
 
 function drawKendo(k){
   const px=k.x*TILE+TILE/2, py=k.y*TILE+TILE*0.9;
-  const sw=Math.sin(k.phase); // 振り
+  const sw=Math.sin(k.phase);
   drawPerson(px,py,{coat:PALETTE.kendo[k.ci], hood:shade(PALETTE.kendo[k.ci],-25), pants:'#2f3b4a',
     facing:k.dir, idle:true, idlePhase:k.phase*0.5, face:'normal'});
-  // 竹刀（前腕から前方へ、上下に振る）
-  const hx=px+k.dir*12, hy=py-30;
-  const ang=k.dir*(0.5 - sw*0.7);
-  const ex=hx+Math.cos(ang)*(k.dir>0?1:-1)*22*Math.abs(Math.cos(ang===0?1:1)) ;
-  const tipX=hx+k.dir*22*Math.cos(sw*0.6);
-  const tipY=hy-18 - sw*10;
-  ctx.strokeStyle='#caa24a'; ctx.lineWidth=4; ctx.lineCap='round';
-  ctx.beginPath(); ctx.moveTo(hx,hy); ctx.lineTo(tipX,tipY); ctx.stroke();
-  ctx.strokeStyle='#8a6a2a'; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(hx,hy); ctx.lineTo(hx+k.dir*5,hy-4); ctx.stroke();
-  // 打ち合いスパーク
-  if(Math.abs(sw)>0.85 && k.dir>0){
-    const cx2=px+TILE, cy2=py-40;
-    ctx.fillStyle='#fff2a0'; ctx.font='bold 14px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
-    ctx.fillText('✦', cx2, cy2);
+  if(!k.gave){ // 竹刀（渡すまで）
+    const hx=px+k.dir*12, hy=py-30;
+    const tipX=hx+k.dir*22*Math.cos(sw*0.6);
+    const tipY=hy-18 - sw*10;
+    ctx.strokeStyle='#caa24a'; ctx.lineWidth=4; ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(hx,hy); ctx.lineTo(tipX,tipY); ctx.stroke();
+    ctx.strokeStyle='#8a6a2a'; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(hx,hy); ctx.lineTo(hx+k.dir*5,hy-4); ctx.stroke();
+    if(Math.abs(sw)>0.85 && k.dir>0){
+      ctx.fillStyle='#fff2a0'; ctx.font='bold 14px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillText('✦', px+TILE, py-40);
+    }
   }
 }
 
@@ -696,15 +711,6 @@ function drawBubble(cx, topY, text, bg){
   ctx.fillStyle='#333'; ctx.fillText(text, x+pad, y+h/2+1);
 }
 
-function drawSnow(){
-  ctx.fillStyle='rgba(255,255,255,0.55)';
-  for(const f of snow){
-    const sx=(f.x*viewW + Math.sin(animTime*f.sp+f.y*10)*14)%viewW;
-    const sy=(f.y*viewH + animTime*f.sp*30)%viewH;
-    ctx.beginPath(); ctx.arc(sx, sy, f.s,0,7); ctx.fill();
-  }
-}
-
 function drawJoystick(){
   if(joyActive && joyBase){
     ctx.beginPath(); ctx.arc(joyBase.x,joyBase.y,MAXR,0,7); ctx.fillStyle='#ffffff20'; ctx.fill();
@@ -717,26 +723,29 @@ function roundRect(x,y,w,h,r){ ctx.beginPath(); ctx.moveTo(x+r,y);
   ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
 
 // ---------- HUD ----------
+function clamp(v,a,b){ return Math.max(a,Math.min(b,v)); }
 function updateHUD(){
   if(state!=='playing') return;
   const tv=document.getElementById('timeVal');
   tv.textContent=Math.ceil(timeLeft);
   tv.classList.toggle('warn', timeLeft<=10);
-  document.getElementById('gauge').style.width=hw+'%';
-  document.getElementById('gaugeTxt').textContent=Math.floor(hw)+'%';
-  document.getElementById('onigiriUi').textContent = hasOnigiri?'🍙×1':'🍙×0';
   const f=teacherDist/totalLen;
   document.getElementById('tBarFill').style.width=(f*100)+'%';
   let loc; if(teacherFreeze>0) loc='足止め中…！';
     else if(f<0.35) loc='廊下の奥'; else if(f<0.7) loc='廊下の真ん中';
     else if(f<0.9) loc='教室のドア前'; else loc='もうすぐそこ！！';
   document.getElementById('tTxt').textContent='先生：'+loc+(f>0.6?' 👣':'');
+  document.getElementById('itemUi').textContent = (hasOnigiri?'🍙×1':'🍙×0') + (hasSword?' 🗡':'');
+  // アクションボタンを対象のそばにフロート
   if(curTarget && playerFreeze<=0){
+    const sx=curTarget.wx-rcamX, sy=curTarget.wy-rcamY;
     actBtn.style.display='flex';
+    actBtn.style.left=clamp(sx-30, 6, viewW-66)+'px';
+    actBtn.style.top =clamp(sy-30, 62, viewH-120)+'px';
+    actBtn.classList.toggle('attack', curTarget.type==='attack');
     const lbl=document.getElementById('actLbl');
-    if(curTarget.type==='vase') lbl.textContent='割る';
-    else if(curTarget.type==='fat') lbl.textContent='あげる';
-    else lbl.textContent='話す';
+    lbl.textContent = curTarget.type==='vase'?'割る': curTarget.type==='fat'?'あげる':
+      curTarget.type==='kendo'?'もらう': curTarget.type==='attack'?'攻撃':'話す';
   } else actBtn.style.display='none';
 }
 
@@ -749,7 +758,7 @@ function loop(ts){
   if(state!=='title') draw();
   if(state==='playing') updateHUD();
 }
-buildGrid(); buildPath(); teacherPos=pointAt(0); camX=player.x; camY=player.y;
+buildGrid(); buildPath(); teacherPos=pointAt(0); camX=player.x=7*TILE+TILE/2; camY=player.y=10*TILE+TILE/2;
 resize();
 requestAnimationFrame(loop);
 })();
